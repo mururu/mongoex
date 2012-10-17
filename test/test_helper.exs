@@ -1,0 +1,2 @@
+Mongoex.start
+ExUnit.start
