@@ -1,5 +1,6 @@
 defmodule Mongoex do
-  def start do
-    :ok = :application.start(:mongoex)
+  defmacro __using__(_) do
+    Mongoex.Server.setup
+    Mongoex.Server.start
   end
 end
