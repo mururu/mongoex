@@ -55,8 +55,8 @@ defmodule Mongoex.Base do
         end
       end
 
-      def find_all(selector) do
-        {:ok, res} = Mongoex.Server.find_all(table_name,selector)
+      def find_all(selector, options // []) do
+        {:ok, res} = Mongoex.Server.find_all(table_name, selector, options)
         case :mongo_cursor.rest(res) do
           [] ->
             []

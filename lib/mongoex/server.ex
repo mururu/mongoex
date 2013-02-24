@@ -28,8 +28,18 @@ defmodule Mongoex.Server do
     execute(fn() -> :mongo.find_one(table, selector) end)
   end
 
-  def find_all(table, selector) do
-    execute(fn() -> :mongo.find(table,selector) end)
+  def find_all(table, selector, options // []) do
+    skip = options[:skip]
+    if skip == nil do
+      skip = 0
+    end
+
+    batch_size = options[:batch_size]
+    if batch_size == nil do
+      batch_size = 0
+    end
+
+    execute(fn() -> :mongo.find(table, selector, {}, skip, batch_size) end)
   end
 
   def count(table, selector) do
