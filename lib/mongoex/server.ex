@@ -8,6 +8,10 @@ defmodule Mongoex.Server do
     :ets.insert(:mongoex_server, {:mongoex_server, Keyword.merge(default_options, options)})
   end
 
+  def authenticate do
+    execute(fn() -> :mongo.auth(config[:username], config[:password]) end)
+  end
+
   def config do
     :ets.lookup(:mongoex_server, :mongoex_server)[:mongoex_server]
   end
@@ -38,6 +42,13 @@ defmodule Mongoex.Server do
 
   def execute(fun) do
     {:ok, conn} = connect
+
+    if not nil?(config[:username]) and not nil?(config[:password]) do
+      auth = fn() -> :mongo.auth(config[:username], config[:password]) end
+      mongo_do = function(:mongo, :do, 5)
+      mongo_do.(:safe, :master, conn, config[:database], auth)
+    end
+
     mongo_do = function(:mongo, :do, 5)
     mongo_do.(:safe, :master, conn, config[:database], fun)
   end
@@ -49,7 +60,9 @@ defmodule Mongoex.Server do
   defp default_options do
     [ address: 'localhost',
       port: 27017,
-      database: :mongoex_test
+      database: :mongoex_test,
+      username: nil,
+      password: nil
     ]
   end
 end
