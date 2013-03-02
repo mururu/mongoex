@@ -52,7 +52,9 @@ defmodule Mongoex.Server do
     conn = get_connection
 
     mongo_do = function(:mongo, :do, 5)
-    mongo_do.(:safe, :master, conn, config[:database], fun)
+    result = mongo_do.(:safe, :master, conn, config[:database], fun)
+    return_connection_to_pool conn
+    result
   end
 
   defp connect do
@@ -71,13 +73,32 @@ defmodule Mongoex.Server do
       {seq, [conn|acc]}
     end
 
-    :ets.new(:mongoex_pool, [:set, :protected, :named_table])
+    :ets.new(:mongoex_pool, [:set, :public, :named_table])
     :ets.insert(:mongoex_pool, {:mongoex_pool, pool})
   end
 
   defp get_connection do
     pool = :ets.lookup(:mongoex_pool, :mongoex_pool)[:mongoex_pool]
-    List.last pool
+    conn = :erlang.hd(pool)
+    new_pool = :erlang.tl(pool)
+    IO.puts "Get Connection: size #{Enum.count pool}"
+    :ets.insert(:mongoex_pool, {:mongoex_pool, new_pool})
+    conn
+  end
+
+
+  defp check_connection_available([]) do
+    {:error, :all_connections_used}
+  end
+
+  defp check_connection_available([pool]) do
+    :erlang.hd(pool)
+  end
+
+  defp return_connection_to_pool(conn) do
+    pool = :ets.lookup(:mongoex_pool, :mongoex_pool)[:mongoex_pool]
+    new_pool = [conn|pool]
+    :ets.insert(:mongoex_pool, {:mongoex_pool, new_pool})
   end
 
   defp default_options do
