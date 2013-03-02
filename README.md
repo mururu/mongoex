@@ -26,7 +26,12 @@ iex> mururu.destroy
 :ok
 ```
 
+## Options
+
 You can authenticate by passing username and password options in the setup.
 
-Mongoex can maintain a pool of connections that are created on server start. By default only one connction is created but you can change this by passing a pool option. If all connections are in use then a DB function will return ```{:error, :no_available_connections}
+Mongoex can maintain a pool of connections that are created on server start. By default only one connction is created but you can change this by passing a pool option. If all connections are in use then a DB function will return
 
+```elixir
+{:error, :no_available_connections}
+```
