@@ -9,10 +9,6 @@ defmodule Mongoex.Server do
     :ets.insert(:mongoex_server, {:mongoex_server, Keyword.merge(default_options, options)})
   end
 
-  def authenticate do
-    execute(fn() -> :mongo.auth(config[:username], config[:password]) end)
-  end
-
   def config do
     :ets.lookup(:mongoex_server, :mongoex_server)[:mongoex_server]
   end
@@ -42,18 +38,13 @@ defmodule Mongoex.Server do
   end
 
   def execute(fun) do
-    #{:ok, conn} = connect
-
-    #if not nil?(config[:username]) and not nil?(config[:password]) do
-    #  auth = fn() -> :mongo.auth(config[:username], config[:password]) end
-    #  mongo_do = function(:mongo, :do, 5)
-    #  mongo_do.(:safe, :master, conn, config[:database], auth)
-    #end
-    conn = get_connection
+    conn = get_connection_from_pool
 
     mongo_do = function(:mongo, :do, 5)
     result = mongo_do.(:safe, :master, conn, config[:database], fun)
+
     return_connection_to_pool conn
+
     result
   end
 
@@ -62,14 +53,19 @@ defmodule Mongoex.Server do
   end
 
   defp setup_pool do
-    sequence = :lists.seq(1,10)
+    sequence = :lists.seq(1, config[:pool])
     {_seqs, pool} = Enum.map_reduce sequence, [], fn(seq, acc) ->
+
       {:ok, conn} = connect
-      auth = fn() ->
-        :mongo.auth(config[:username], config[:password])
+
+      if config[:username] !== nil and config[:password] !== nil do
+        auth = fn() ->
+          :mongo.auth(config[:username], config[:password])
+        end
+        mongo_do = function(:mongo, :do, 5)
+        mongo_do.(:safe, :master, conn, config[:database], auth)
       end
-      mongo_do = function(:mongo, :do, 5)
-      mongo_do.(:safe, :master, conn, config[:database], auth)
+      
       {seq, [conn|acc]}
     end
 
@@ -77,22 +73,18 @@ defmodule Mongoex.Server do
     :ets.insert(:mongoex_pool, {:mongoex_pool, pool})
   end
 
-  defp get_connection do
+  defp get_connection_from_pool do
     pool = :ets.lookup(:mongoex_pool, :mongoex_pool)[:mongoex_pool]
-    conn = :erlang.hd(pool)
-    new_pool = :erlang.tl(pool)
-    IO.puts "Get Connection: size #{Enum.count pool}"
-    :ets.insert(:mongoex_pool, {:mongoex_pool, new_pool})
-    conn
-  end
-
-
-  defp check_connection_available([]) do
-    {:error, :all_connections_used}
-  end
-
-  defp check_connection_available([pool]) do
-    :erlang.hd(pool)
+ 
+    case Enum.count(pool) do
+      0 ->
+        {:error, :no_available_connections}
+      _ ->
+        conn = :erlang.hd(pool)
+        new_pool = :erlang.tl(pool)
+        :ets.insert(:mongoex_pool, {:mongoex_pool, new_pool})
+        conn
+    end
   end
 
   defp return_connection_to_pool(conn) do
@@ -106,7 +98,8 @@ defmodule Mongoex.Server do
       port: 27017,
       database: :mongoex_test,
       username: nil,
-      password: nil
+      password: nil,
+      pool: 1
     ]
   end
 end
