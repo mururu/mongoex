@@ -71,7 +71,7 @@ defmodule Mongoex.Base do
       end
 
       defp table_name do
-        binary_to_atom(String.downcase(String.replace(inspect(__MODULE__), ".", "_", global: true)))
+        binary_to_atom(String.downcase(List.last(String.split inspect(__MODULE__), ".", global: true)))
       end
 
       defp record_to_tuple(record) do
