@@ -2,6 +2,8 @@
 
 Mongoex is an ODM-like module for MongoDb in Elixir.
 
+This is still under development.
+
 ## Usage
 
 ```elixir
