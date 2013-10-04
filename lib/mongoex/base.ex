@@ -97,7 +97,7 @@ defmodule Mongoex.Base do
         list = tuple_to_list(tuple)
         even_odd = Enum.map :lists.seq(0, length(list)-1), fn(x) -> rem(x,2) end
         list_zipped_even_odd = Enum.zip list, even_odd
-        {even,odds} = List.foldl list_zipped_even_odd, {[],[]}, fn({v,i}, {even,odds}) -> if i==0, do: {List.concat(even,[v]),odds}, else: {even,List.concat(odds,[v])} end
+        {even,odds} = List.foldl list_zipped_even_odd, {[],[]}, fn({v,i}, {even,odds}) -> if i==0, do: {Enum.concat(even,[v]),odds}, else: {even,Enum.concat(odds,[v])} end
         Enum.zip even, odds
       end
     end
