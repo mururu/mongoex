@@ -50,7 +50,7 @@ defmodule Mongoex.Server do
   def execute(fun) do
     conn = get_connection_from_pool
 
-    mongo_do = function(:mongo, :do, 5)
+    mongo_do = Module.function(:mongo, :do, 5)
     result = mongo_do.(:safe, :master, conn, config[:database], fun)
 
     return_connection_to_pool conn
@@ -72,7 +72,7 @@ defmodule Mongoex.Server do
         auth = fn() ->
           :mongo.auth(config[:username], config[:password])
         end
-        mongo_do = function(:mongo, :do, 5)
+        mongo_do = Module.function(:mongo, :do, 5)
         mongo_do.(:safe, :master, conn, config[:database], auth)
       end
       
