@@ -1,2 +1,1 @@
-Mongoex.start
 ExUnit.start
